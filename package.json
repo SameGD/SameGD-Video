@@ -1,0 +1,15 @@
+{
+  "name": "samegd-video",
+  "version": "1.0.0",
+  "description": "time to steal some eyeballs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Sam Wade",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.15.2",
+    "socket.io": "^3.0.4"
+  }
+}
