@@ -1,8 +1,21 @@
 const socket = io.connect(document.documentURI);
 
+// Name Vars
+
+let userName = "";
+const userList = document.getElementById("userList");
+const nameInput = document.getElementById("nameInput");
+const nameButton = document.getElementById("nameButton");
+const storedName = localStorage.getItem('userName');
+let usernameDict = [];
+
+// Video / Stream Vars
+
 const localView = document.getElementById("localVideo");
 const videoContainer = document.getElementById("videos");
-const connectedVideos = [];
+const peerList = [];
+let stream;
+
 // Sets the constraints of the media devices that this code will be using.
 
 const constraints = {audio: true, video: true};
@@ -15,25 +28,24 @@ const config = {
   }]
 };
 
-// Sets a new peer connection, that will be found with the ice servers declared in the config variable.
-
-const peerCon = new RTCPeerConnection(config);
-
 async function start() {
 
   try {
 
     // Gets the local stream (so video stream and audio stream)
 
-    const stream = await navigator.mediaDevices.getUserMedia(constraints);
-
-    // Adds each stream to the peer connection, for it to be sent later
-
-    stream.getTracks().forEach((track) => peerCon.addTrack(track, stream));
+    stream = await navigator.mediaDevices.getUserMedia(constraints);
 
     // Adds the local stream to the video object
 
     localView.srcObject = stream;
+    
+    // Joins the server, so other users are able to find and connect to this stream
+    
+    socket.emit("join", {id: socket.id, name: userName});
+    
+    document.getElementById("nameField").classList.add("is-hidden");
+    document.getElementById("interface").classList.remove("is-hidden");
 
   } catch (err) {
     console.error(err);
@@ -41,92 +53,172 @@ async function start() {
 
 };
 
-function dial(id) {
+async function createPeerConnection(peerId) {
   
-  start();
+  // Checks if Peer Connection has already been made for the 
+  
+  if (!(peerId in peerList)) {
+  
+    // Sets a new peer connection, that will be found with the ice servers declared in the config variable.
+    
+    peerList[peerId] = new RTCPeerConnection(config);
+    
+    // Adds each stream to the peer connection, for it to be sent later
+    
+    stream.getTracks().forEach((track) => peerList[peerId].addTrack(track, stream));
+    
+    // Once the ICE server finds a viable candidate route for the two connections to talk down, an event will be called. This allows the candidate route to be sent over the sockets server to the other client.
 
-  // Once the ICE server finds a viable candidate route for the two connections to talk down, an event will be called. This allows the candidate route to be sent over the sockets server to the other client.
+    peerList[peerId].onicecandidate = (event) => {
+      socket.emit("request", {sender: socket.id, receiver: peerId, candidate: event.candidate});
+      console.log("Sent Ice Candidate to " + peerId);
+    };
 
-  peerCon.onicecandidate = ({candidate}) => {
-    socket.emit("request", {sender: socket.id, receiver: id, candidate});
+    // So what I think is happening is that this proposes a connection between the peer and the user. So it sets the description of the proposed connection locally, creates an offer to the other peer, and sends the proposed description that was just sent to the other peer. This probably ensures both connections are on the same page or something.
+
+    peerList[peerId].onnegotiationneeded = async () => {
+      try {
+
+        await peerList[peerId].setLocalDescription(await peerList[peerId].createOffer());
+
+        socket.emit("request", {sender: socket.id, receiver: peerId, desc: peerList[peerId].localDescription});
+
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    
+//    peerList[peerId].oniceconnectionstatechange = async () => {
+//      
+//      if (peerList[peerId].iceConnectionState != "connected") {
+//        console.log(peerId + " Disconnected!");
+//        document.getElementById(peerId).remove();
+//        delete peerList[peerId];
+//      }
+//      
+//    }
+    
+    // It always generates two video streams for some reason, so this stops that from happening
+    
+    let hasVideo = false;
+    
+    // I think what this is doing is that once it gets a connection with the peer with a stream attached, it attaches that stream to the video object.
+    
+    peerList[peerId].ontrack = async (event) => {
+
+      if (hasVideo == false) {
+      
+        addVideo(event, peerId);
+        hasVideo = true;
+      };
+
+    };
+    
+  }
+}
+
+async function addVideo(video, peerId) {
+  
+  let videoDiv = document.createElement("div");
+  
+  videoDiv.classList.add("video");
+  
+  videoDiv.id = peerId;
+  
+  // Adds the username of the peer to the div for some CSS shenanigans
+  
+  videoDiv.setAttribute("username", usernameDict[peerId]);
+  
+  // Creates the video element 
+  
+  let remoteView = document.createElement("video");
+  
+  // Attaches the video stream
+  
+  remoteView.srcObject = video.streams[0];
+  
+  // Sets the settings of the video element
+  
+  remoteView.autoplay = true;
+  remoteView.playsinline = true;
+  
+  videoDiv.appendChild(remoteView)
+  
+  videoContainer.appendChild(videoDiv);
+  
+  video.track.onended = (event) => {
+    
+    console.log("Stream ended");
+    
+    videoDiv.remove();
+    delete peerList[peerId];
+    
   };
-
-  // Ugh i don't even know what's happening here.
-
-  peerCon.onnegotiationneeded = async () => {
-    try {
-      await peerCon.setLocalDescription(await peerCon.createOffer());
-      socket.emit("request", {sender: socket.id, receiver: id, desc: peerCon.localDescription});
-    } catch (err) {
-      console.error(err);
-    }
-};
-
+  
   
 }
 
-// I think what this is doing is that once it gets a connection with the peer with a stream attached, it attaches that stream to the video object.
+async function dial(e) {
 
-peerCon.ontrack = (event) => {
+  let id = e.getAttribute("caller");
+  console.log(id);
+  createPeerConnection(id);
   
-  let vidID = event.streams[0].id;
-  
-  if (!connectedVideos.includes(vidID)) {
-  
-    connectedVideos.push(vidID);
-
-    let remoteView = document.createElement("video");
-
-    remoteView.srcObject = event.streams[0];
-    remoteView.autoplay = true;
-    remoteView.playsinline = true;
-
-    videoContainer.appendChild(remoteView);
-  }
-
-};
-
+}
 
 // So this gets messages from other clients
 
 socket.on("request", async ({sender, receiver, desc, candidate}) => {
   try {
+    
+    createPeerConnection(sender);
+    
     if (desc) {
 
       if (desc.type === "offer") {
-        await peerCon.setRemoteDescription(desc);
+        
+        console.log("Got Offer from " + sender);
+        
+        await peerList[sender].setRemoteDescription(desc);
 
         // I thought this was already being done in the start function? Oh wait, this is if we don't start, and instead the other client starts.
 
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        // const stream = await navigator.mediaDevices.getUserMedia(constraints);
 
-        stream.getTracks().forEach((track) => peerCon.addTrack(track, stream));
+        // stream.getTracks().forEach((track) => peerCon.addTrack(track, stream));
 
-        localView.srcObject = stream;
+        // localView.srcObject = stream;
 
-        await peerCon.setLocalDescription(await peerCon.createAnswer());
+        await peerList[sender].setLocalDescription(await peerList[sender].createAnswer());
 
-        socket.emit("request", {sender: socket.id, receiver: sender, desc:  peerCon.localDescription});
+        socket.emit("request", {sender: socket.id, receiver: sender, desc: peerList[sender].localDescription});
 
       } else if (desc.type === "answer") {
-        await peerCon.setRemoteDescription(desc);
+        
+        console.log("Got Answer from " + sender);
+        
+        await peerList[sender].setRemoteDescription(desc);
       }
 
     } else if (candidate) {
-      await peerCon.addIceCandidate(candidate);
+      
+      console.log("Got Candidate from " + sender);
+      
+      await peerList[sender].addIceCandidate(candidate);
     }
   } catch (err) {
     console.error(err);
   }
 });
 
-// Name Vars
 
-let userName = "";
-let userList = document.getElementById("userList");
-let nameInput = document.getElementById("nameInput");
-let nameButton = document.getElementById("nameButton");
-const storedName = localStorage.getItem('userName');
+socket.on("userDisconnected", async (id) => {
+  if (id in peerList) {
+    document.getElementById(id).remove();
+    delete peerList[id];
+  }
+})
 
 //Handling Name Shit 
 
@@ -141,11 +233,7 @@ nameButton.addEventListener("click", function() {
     userName = nameInput.value;
     localStorage.setItem('userName', userName);
     
-    socket.emit("join", {id: socket.id, name: userName});
-    
-    document.getElementById("nameField").classList.add("is-hidden");
-    document.getElementById("interface").classList.remove("is-hidden");
-    
+    start();
     
   } else {
     nameInput.placeholder = "You need to enter something my dude";
@@ -166,15 +254,17 @@ nameInput.addEventListener("keyup", function(event) {
 
 socket.on("updateUsers", data => {
 
+  usernameDict = [];
   userList.innerHTML = "";
   
   data.forEach(user => {
     
-    if (user[0] === socket.id) {
+    usernameDict[user[0]] = user[1];
     
+    if (user[0] === socket.id) {
       userList.innerHTML += `<p>${user[1]} (You)</p>`;
     } else {
-      userList.innerHTML += `<p><a onClick="dial('${user[0]}');">${user[1]}</a></p>`;
+      userList.innerHTML += `<p><a caller="${user[0]}" onClick="dial(this);">${user[1]}</a></p>`;
     }
     
   });

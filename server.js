@@ -13,9 +13,7 @@ function getKeyByValue(object, value) {
 
 function updateUserNameList() {
   let userNameList = [];
-  
-  console.log(users);
-  
+
   for (const [key, value] of Object.entries(users)) {
     userNameList.push([key, value]);
   }
@@ -30,6 +28,8 @@ io.on("connection", function(socket) {
   
   socket.on("disconnect", (data) => {
 
+    io.emit("userDisconnected", socket.id);
+    
     delete users[socket.id];
     
     updateUserNameList();

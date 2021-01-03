@@ -183,7 +183,30 @@ Messenger
   flex-direction: column-reverse;
 }
 
-#messageContainer {
+.video {
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.video::before {
+  content: attr(username);
+  font-weight: 600;
+  align-items: stretch;
+  display: flex;
+  padding: 0.5rem;
+  background-color: var(--primary);
+  color: white !important;
+  box-shadow: 0 0.125em 0.25em rgba(10, 10, 10, 0.1);
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+  width: 100%;
   
 }
 
+.video video {
+  width: 100%;
+  height: auto;
+  border-bottom-left-radius: 6px;
+  border-bottom-right-radius: 6px;
+  box-shadow: 0 0.125em 0.25em rgba(10, 10, 10, 0.1);
+}
