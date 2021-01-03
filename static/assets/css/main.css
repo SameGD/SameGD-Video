@@ -224,3 +224,9 @@ Messenger
   box-shadow: 0 0.125em 0.25em rgba(10, 10, 10, 0.1);
 
 }
+
+#localVideo {
+  transform: rotateY(180deg);
+  border-top-right-radius: 0px;
+  border-top-left-radius: 6px;
+}

@@ -87,17 +87,6 @@ async function createPeerConnection(peerId) {
         console.error(err);
       }
     };
-
-    
-//    peerList[peerId].oniceconnectionstatechange = async () => {
-//      
-//      if (peerList[peerId].iceConnectionState != "connected") {
-//        console.log(peerId + " Disconnected!");
-//        document.getElementById(peerId).remove();
-//        delete peerList[peerId];
-//      }
-//      
-//    }
     
     // It always generates two video streams for some reason, so this stops that from happening
     
