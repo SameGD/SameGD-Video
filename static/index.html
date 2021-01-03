@@ -39,21 +39,37 @@
   
 </nav>
 
-<div class="container">
-
-  <section class="section" id="nameField">
-    <fieldset>
-      <label class="label">Name</label>
-      <div class="field has-addons">
-        <div class="control is-expanded">
-          <input class="input is-primary" type="text" placeholder="What's yo Name?" id="nameInput">
-        </div>
-        <div class="control">
-          <button class="button is-primary" id="nameButton">Submit</button>
+<section class="hero  has-background-primary-light">
+  <div class="hero-body">
+    <div class="container">
+      <div class="card has-text-centered">
+        <div class="card-header has-background-primary p-2"></div>
+        <div class="card-content">
+          <h1 class="title is-2 has-text-weight-bold">
+              GD Video
+          </h1>
+          <h2 class="subtitle">The first ever WebRTC video chat</h2>
+          
         </div>
       </div>
-    </fieldset>
-  </section>
+      
+      <fieldset class="mt-4" id="nameField">
+        <label class="label">Enter a name to continue...</label>
+        <div class="field has-addons">
+          <div class="control is-expanded">
+            <input class="input is-primary" type="text" placeholder="What's yo Name?" id="nameInput">
+          </div>
+          <div class="control">
+            <button class="button is-primary" id="nameButton">Submit</button>
+          </div>
+        </div>
+      </fieldset>
+      
+    </div>
+  </div>  
+</section>
+    
+<div class="container">
   
   <section class="section is-hidden" id="interface">
     
@@ -65,6 +81,11 @@
       <div id="userList" class="p-3"></div>   
       
     </div>
+    
+    <label class="checkbox">
+      <input type="checkbox" onclick="rainbow(this);">
+      Rainbow Mode
+    </label>
     
     <div id="videos">
       

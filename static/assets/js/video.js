@@ -269,3 +269,34 @@ socket.on("updateUsers", data => {
     
   });
 });
+
+
+// Rainbow Mode
+
+function rainbow(e) {
+  
+  let videos = document.getElementsByTagName("video");
+  let rainbowYes = e.checked;
+  let hue = 0;
+  
+  if (rainbowYes) {
+    rainbowloop = setInterval(function(){ 
+      
+      for (let video of videos) {
+        video.style.filter = "hue-rotate(" + hue + "deg)";
+      };
+      
+      hue += 1;
+    
+      if (hue == 360) {
+        hue = 0;
+      }
+      
+    }, 1);
+    
+  } else {
+    clearInterval(rainbowloop);
+    
+  };
+  
+}

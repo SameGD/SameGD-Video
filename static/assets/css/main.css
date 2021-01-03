@@ -183,30 +183,43 @@ Messenger
   flex-direction: column-reverse;
 }
 
+#videos {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  
+}
+
 .video {
-  width: 100%;
-  margin-bottom: 1rem;
+  margin: 1rem;
+  flex-shrink: 1;
+  max-height: 75vh;
+  width: 46%;
+  height: auto;
+  
 }
 
 .video::before {
+  text-align: center;
   content: attr(username);
+  display: block;
   font-weight: 600;
-  align-items: stretch;
-  display: flex;
   padding: 0.5rem;
+  height: 2rem;
+  width: 20%;
+  text-overflow: ellipsis;
   background-color: var(--primary);
   color: white !important;
   box-shadow: 0 0.125em 0.25em rgba(10, 10, 10, 0.1);
   border-top-left-radius: 6px;
   border-top-right-radius: 6px;
-  width: 100%;
   
 }
 
 .video video {
-  width: 100%;
-  height: auto;
   border-bottom-left-radius: 6px;
   border-bottom-right-radius: 6px;
+  border-top-right-radius: 6px;
   box-shadow: 0 0.125em 0.25em rgba(10, 10, 10, 0.1);
+
 }
