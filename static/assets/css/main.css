@@ -193,6 +193,7 @@ Messenger
 .video {
   margin: 1rem;
   flex-shrink: 1;
+  flex-grow: 1;
   max-height: 75vh;
   width: 46%;
   height: auto;

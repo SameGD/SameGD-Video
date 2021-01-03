@@ -297,6 +297,10 @@ function rainbow(e) {
   } else {
     clearInterval(rainbowloop);
     
+    for (let video of videos) {
+      video.style.filter = "hue-rotate(0deg)";
+    };
+    
   };
   
 }
